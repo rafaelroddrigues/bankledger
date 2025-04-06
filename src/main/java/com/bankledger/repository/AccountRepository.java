@@ -11,7 +11,7 @@ public class AccountRepository {
     private final Map<String, Account> accounts = new HashMap<>();
 
     public void save(Account account) {
-        accounts.put(account.getAccountNumber(), account);
+        accounts.put(account.accountNumber(), account);
     }
 
     public Account findByAccountNumber(String accountNumber) {

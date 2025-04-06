@@ -10,11 +10,6 @@ public class LedgerController {
     @Autowired
     private LedgerService ledgerService;
 
-    @GetMapping("/")
-    public String home() {
-        return "Welcome to the Home Page!";
-    }
-
     @PostMapping("/account")
     public void createAccount(@RequestParam String accountNumber) {
         ledgerService.createAccount(accountNumber);

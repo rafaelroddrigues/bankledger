@@ -1,25 +1,19 @@
 package com.bankledger.model;
 
-import lombok.Data;
-
-@Data
-public class Account {
-
-    private final String accountNumber;
-    private double amount;
-    private double balance;
+public record Account(String accountNumber, double amount, double balance) {
 
     public Account(String accountNumber) {
-        this.accountNumber = accountNumber;
+        this(accountNumber, 0, 0);
     }
 
-    public void deposit(double amount) {
+    public Account deposit(double amount) {
         if (amount > 0) {
-            this.balance += amount;
+            return new Account(this.accountNumber, this.amount, this.balance + amount);
         }
+        return this;
     }
 
-    public void withdraw(double amount) {
-        this.amount = amount;
+    public Account withdraw(double amount) {
+        return new Account(this.accountNumber, amount, this.balance);
     }
 }
