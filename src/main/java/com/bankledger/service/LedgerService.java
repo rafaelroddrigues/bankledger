@@ -21,10 +21,16 @@ public class LedgerService {
 
     public void createAccount(String accountNumber) throws ExceptionList {
         Map<String, List<String>> errors = new LinkedHashMap<>();
-        errors.put("accountNumber", InputValidation.validateNotBlank(accountNumber, "accountNumber"));
-        errors.get("accountNumber").addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
-        errors.get("accountNumber").addAll(InputValidation.validateAccountNumberExists(accountRepository.findByAccountNumber(accountNumber) != null, "accountNumber"));
 
+        // Validate account number
+        List<String> accountNumberErrors = InputValidation.validateNotBlank(accountNumber, "accountNumber");
+        if (accountNumberErrors.isEmpty()) {
+            accountNumberErrors.addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
+            accountNumberErrors.addAll(InputValidation.validateAccountNumberExists(accountRepository.findByAccountNumber(accountNumber) != null, "accountNumber"));
+        }
+        errors.put("accountNumber", accountNumberErrors);
+
+        // Check for any errors before proceeding
         if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
             throw new ExceptionList(errors);
         }
@@ -36,43 +42,65 @@ public class LedgerService {
     public void deposit(String accountNumber, String amount) throws ExceptionList {
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
-        errors.put("accountNumber", InputValidation.validateNotBlank(accountNumber, "accountNumber"));
-        errors.get("accountNumber").addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
-        Account account = accountRepository.findByAccountNumber(accountNumber);
-        errors.get("accountNumber").addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
-        errors.put("amount", InputValidation.validateNotBlank(amount, "amount"));
-        errors.get("amount").addAll(InputValidation.validateAmount(amount, "amount"));
+        // Validate account number
+        List<String> accountNumberErrors = InputValidation.validateNotBlank(accountNumber, "accountNumber");
+        if (accountNumberErrors.isEmpty()) {
+            accountNumberErrors.addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
+            Account account = accountRepository.findByAccountNumber(accountNumber);
+            accountNumberErrors.addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
+        }
+        errors.put("accountNumber", accountNumberErrors);
 
+        // Validate amount
+        List<String> amountErrors = InputValidation.validateNotBlank(amount, "amount");
+        if (amountErrors.isEmpty()) {
+            amountErrors.addAll(InputValidation.validateAmount(amount, "amount"));
+        }
+        errors.put("amount", amountErrors);
+
+        // Check for any errors before proceeding
         if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
             throw new ExceptionList(errors);
         }
 
         // Business logic to deposit amount
+        Account account = accountRepository.findByAccountNumber(accountNumber);
         accountRepository.save(account.deposit(Double.parseDouble(amount)));
     }
 
     public void withdraw(String accountNumber, String amount) throws ExceptionList {
         Map<String, List<String>> errors = new LinkedHashMap<>();
-        errors.put("accountNumber", InputValidation.validateNotBlank(accountNumber, "accountNumber"));
-        errors.get("accountNumber").addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
+
+        // Validate account number
+        List<String> accountNumberErrors = InputValidation.validateNotBlank(accountNumber, "accountNumber");
+        if (accountNumberErrors.isEmpty()) {
+            accountNumberErrors.addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
+            Account account = accountRepository.findByAccountNumber(accountNumber);
+            accountNumberErrors.addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
+        }
+        errors.put("accountNumber", accountNumberErrors);
+
+        // Validate amount
+        List<String> amountErrors = InputValidation.validateNotBlank(amount, "amount");
+        if (amountErrors.isEmpty()) {
+            amountErrors.addAll(InputValidation.validateAmount(amount, "amount"));
+        }
+        errors.put("amount", amountErrors);
+
+        // Check for any errors before proceeding
+        if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
+            throw new ExceptionList(errors);
+        }
+
+        // Validate sufficient balance
         Account account = accountRepository.findByAccountNumber(accountNumber);
-        errors.get("accountNumber").addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
-        errors.put("amount", InputValidation.validateNotBlank(amount, "amount"));
-        errors.get("amount").addAll(InputValidation.validateAmount(amount, "amount"));
-
-        if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
-            throw new ExceptionList(errors);
-        }
-
         if (account != null) {
-            errors.get("amount").addAll(InputValidation.validateSufficientBalance(account.balance() >= Double.parseDouble(amount), "amount"));
+            List<String> balanceErrors = InputValidation.validateSufficientBalance(account.balance() >= Double.parseDouble(amount), "amount");
+            if (!balanceErrors.isEmpty()) {
+                errors.put("amount", balanceErrors);
+                throw new ExceptionList(errors);
+            }
+            accountRepository.save(account.withdraw(Double.parseDouble(amount)));
         }
-
-        if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
-            throw new ExceptionList(errors);
-        }
-
-        // Business logic to withdraw amount
-        accountRepository.save(account.withdraw(Double.parseDouble(amount)));
     }
 }
