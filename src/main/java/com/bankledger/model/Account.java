@@ -7,13 +7,10 @@ public record Account(String accountNumber, double amount, double balance) {
     }
 
     public Account deposit(double amount) {
-        if (amount > 0) {
-            return new Account(this.accountNumber, this.amount, this.balance + amount);
-        }
-        return this;
+        return new Account(this.accountNumber, this.amount, this.balance + amount);
     }
 
     public Account withdraw(double amount) {
-        return new Account(this.accountNumber, amount, this.balance);
+        return new Account(this.accountNumber, this.amount, this.balance - amount);
     }
 }

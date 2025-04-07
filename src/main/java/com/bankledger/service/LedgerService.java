@@ -2,104 +2,77 @@ package com.bankledger.service;
 
 import com.bankledger.exception.ExceptionList;
 import com.bankledger.model.Account;
-import com.bankledger.model.Transaction;
 import com.bankledger.repository.AccountRepository;
-import com.bankledger.repository.TransactionRepository;
-import com.bankledger.constants.Messages;
+import com.bankledger.validation.InputValidation;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 @Service
 public class LedgerService {
+
     private final AccountRepository accountRepository;
-    private final TransactionRepository transactionRepository;
 
-    public LedgerService(AccountRepository accountRepository, TransactionRepository transactionRepository) {
+    public LedgerService(AccountRepository accountRepository) {
         this.accountRepository = accountRepository;
-        this.transactionRepository = transactionRepository;
     }
 
-    public void createAccount(String accountNumber) {
-        Map<String, List<String>> errors = new HashMap<>();
-        List<String> accountNumberErrors = new ArrayList<>();
-        if (!accountNumber.matches("\\d{9}")) {
-            accountNumberErrors.add(Messages.INVALID_ACCOUNT_NUMBER);
-        }
-        if (accountRepository.findByAccountNumber(accountNumber) != null) {
-            accountNumberErrors.add(Messages.ACCOUNT_NUMBER_EXISTS);
-        }
-        if (!accountNumberErrors.isEmpty()) {
-            errors.put("accountNumber", accountNumberErrors);
-        }
-        if (!errors.isEmpty()) {
+    public void createAccount(String accountNumber) throws ExceptionList {
+        Map<String, List<String>> errors = new LinkedHashMap<>();
+        errors.put("accountNumber", InputValidation.validateNotBlank(accountNumber, "accountNumber"));
+        errors.get("accountNumber").addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
+        errors.get("accountNumber").addAll(InputValidation.validateAccountNumberExists(accountRepository.findByAccountNumber(accountNumber) != null, "accountNumber"));
+
+        if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
             throw new ExceptionList(errors);
         }
-        Account account = new Account(accountNumber);
-        accountRepository.save(account);
+
+        // Business logic to create account
+        accountRepository.save(new Account(accountNumber));
     }
 
-    @Transactional
-    public void deposit(String accountNumber, double amount) {
-        Map<String, List<String>> errors = new HashMap<>();
-        List<String> accountNumberErrors = new ArrayList<>();
-        List<String> amountErrors = new ArrayList<>();
-        if (!accountNumber.matches("\\d{9}")) {
-            accountNumberErrors.add(Messages.INVALID_ACCOUNT_NUMBER);
-        }
-        if (amount <= 0) {
-            amountErrors.add(Messages.DEPOSIT_AMOUNT_INVALID);
-        }
+    public void deposit(String accountNumber, String amount) throws ExceptionList {
+        Map<String, List<String>> errors = new LinkedHashMap<>();
+
+        errors.put("accountNumber", InputValidation.validateNotBlank(accountNumber, "accountNumber"));
+        errors.get("accountNumber").addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
         Account account = accountRepository.findByAccountNumber(accountNumber);
-        if (account == null) {
-            accountNumberErrors.add(Messages.ACCOUNT_NOT_FOUND);
-        }
-        if (!accountNumberErrors.isEmpty()) {
-            errors.put("accountNumber", accountNumberErrors);
-        }
-        if (!amountErrors.isEmpty()) {
-            errors.put("amount", amountErrors);
-        }
-        if (!errors.isEmpty()) {
+        errors.get("accountNumber").addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
+        errors.put("amount", InputValidation.validateNotBlank(amount, "amount"));
+        errors.get("amount").addAll(InputValidation.validateAmount(amount, "amount"));
+
+        if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
             throw new ExceptionList(errors);
         }
-        account.deposit(amount);
-        accountRepository.save(account);
-        transactionRepository.save(new Transaction(accountNumber, amount, "deposit"));
+
+        // Business logic to deposit amount
+        accountRepository.save(account.deposit(Double.parseDouble(amount)));
     }
 
-    @Transactional
-    public void withdraw(String accountNumber, double amount) {
-        Map<String, List<String>> errors = new HashMap<>();
-        List<String> accountNumberErrors = new ArrayList<>();
-        List<String> amountErrors = new ArrayList<>();
-        if (!accountNumber.matches("\\d{9}")) {
-            accountNumberErrors.add(Messages.INVALID_ACCOUNT_NUMBER);
-        }
-        if (amount <= 0) {
-            amountErrors.add(Messages.WITHDRAWAL_AMOUNT_INVALID);
-        }
+    public void withdraw(String accountNumber, String amount) throws ExceptionList {
+        Map<String, List<String>> errors = new LinkedHashMap<>();
+        errors.put("accountNumber", InputValidation.validateNotBlank(accountNumber, "accountNumber"));
+        errors.get("accountNumber").addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
         Account account = accountRepository.findByAccountNumber(accountNumber);
-        if (account == null) {
-            accountNumberErrors.add(Messages.ACCOUNT_NOT_FOUND);
-        } else if (account.balance() < amount) {
-            amountErrors.add(Messages.INSUFFICIENT_BALANCE);
-        }
-        if (!accountNumberErrors.isEmpty()) {
-            errors.put("accountNumber", accountNumberErrors);
-        }
-        if (!amountErrors.isEmpty()) {
-            errors.put("amount", amountErrors);
-        }
-        if (!errors.isEmpty()) {
+        errors.get("accountNumber").addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
+        errors.put("amount", InputValidation.validateNotBlank(amount, "amount"));
+        errors.get("amount").addAll(InputValidation.validateAmount(amount, "amount"));
+
+        if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
             throw new ExceptionList(errors);
         }
-        account.withdraw(amount);
-        accountRepository.save(account);
-        transactionRepository.save(new Transaction(accountNumber, amount, "withdrawal"));
+
+        if (account != null) {
+            errors.get("amount").addAll(InputValidation.validateSufficientBalance(account.balance() >= Double.parseDouble(amount), "amount"));
+        }
+
+        if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
+            throw new ExceptionList(errors);
+        }
+
+        // Business logic to withdraw amount
+        accountRepository.save(account.withdraw(Double.parseDouble(amount)));
     }
 }
