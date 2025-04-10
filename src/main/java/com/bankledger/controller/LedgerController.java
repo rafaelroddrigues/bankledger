@@ -1,5 +1,8 @@
 package com.bankledger.controller;
 
+import com.bankledger.dto.CreateAccountRequest;
+import com.bankledger.dto.DepositRequest;
+import com.bankledger.dto.WithdrawRequest;
 import com.bankledger.exception.ExceptionList;
 import com.bankledger.service.LedgerService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,6 +18,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
+@RequestMapping("/api/ledger")
 public class LedgerController {
 
     private static final Logger logger = LoggerFactory.getLogger(LedgerController.class);
@@ -23,9 +27,9 @@ public class LedgerController {
     private LedgerService ledgerService;
 
     @PostMapping("/account")
-    public ResponseEntity<?> createAccount(@RequestParam(name = "accountNumber", required = false) String accountNumber) {
+    public ResponseEntity<?> createAccount(@RequestBody CreateAccountRequest request) {
         try {
-            ledgerService.createAccount(accountNumber);
+            ledgerService.createAccount(request);
         } catch (ExceptionList e) {
             return new ResponseEntity<>(buildErrorResponse(e.getErrors()), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
@@ -37,10 +41,9 @@ public class LedgerController {
     }
 
     @PostMapping("/deposit")
-    public ResponseEntity<?> deposit(@RequestParam(name = "accountNumber", required = false) String accountNumber,
-                                     @RequestParam(name = "amount", required = false) String amount) {
+    public ResponseEntity<?> deposit(@RequestBody DepositRequest request) {
         try {
-            ledgerService.deposit(accountNumber, amount);
+            ledgerService.deposit(request);
         } catch (ExceptionList e) {
             return new ResponseEntity<>(buildErrorResponse(e.getErrors()), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {
@@ -52,10 +55,9 @@ public class LedgerController {
     }
 
     @PostMapping("/withdraw")
-    public ResponseEntity<?> withdraw(@RequestParam(name = "accountNumber", required = false) String accountNumber,
-                                      @RequestParam(name = "amount", required = false) String amount) {
+    public ResponseEntity<?> withdraw(@RequestBody WithdrawRequest request) {
         try {
-            ledgerService.withdraw(accountNumber, amount);
+            ledgerService.withdraw(request);
         } catch (ExceptionList e) {
             return new ResponseEntity<>(buildErrorResponse(e.getErrors()), HttpStatus.BAD_REQUEST);
         } catch (Exception e) {

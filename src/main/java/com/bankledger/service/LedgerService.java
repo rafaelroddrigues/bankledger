@@ -1,5 +1,8 @@
 package com.bankledger.service;
 
+import com.bankledger.dto.CreateAccountRequest;
+import com.bankledger.dto.DepositRequest;
+import com.bankledger.dto.WithdrawRequest;
 import com.bankledger.exception.ExceptionList;
 import com.bankledger.model.Account;
 import com.bankledger.repository.AccountRepository;
@@ -19,7 +22,8 @@ public class LedgerService {
         this.accountRepository = accountRepository;
     }
 
-    public void createAccount(String accountNumber) throws ExceptionList {
+    public void createAccount(CreateAccountRequest request) throws ExceptionList {
+        String accountNumber = request.accountNumber();
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
         // Validate account number
@@ -39,7 +43,9 @@ public class LedgerService {
         accountRepository.save(new Account(accountNumber));
     }
 
-    public void deposit(String accountNumber, String amount) throws ExceptionList {
+    public void deposit(DepositRequest request) throws ExceptionList {
+        String accountNumber = request.accountNumber();
+        String amount = request.amount();
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
         // Validate account number
@@ -68,7 +74,9 @@ public class LedgerService {
         accountRepository.save(account.deposit(Double.parseDouble(amount)));
     }
 
-    public void withdraw(String accountNumber, String amount) throws ExceptionList {
+    public void withdraw(WithdrawRequest request) throws ExceptionList {
+        String accountNumber = request.accountNumber();
+        String amount = request.amount();
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
         // Validate account number
