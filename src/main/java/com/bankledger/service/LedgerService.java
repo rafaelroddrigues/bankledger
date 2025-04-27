@@ -6,6 +6,7 @@ import com.bankledger.dto.WithdrawRequest;
 import com.bankledger.exception.ExceptionList;
 import com.bankledger.model.Account;
 import com.bankledger.repository.AccountRepository;
+import com.bankledger.validation.AccountValidation;
 import com.bankledger.validation.InputValidation;
 import org.springframework.stereotype.Service;
 
@@ -27,11 +28,7 @@ public class LedgerService {
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
         // Validate account number
-        List<String> accountNumberErrors = InputValidation.validateNotBlank(accountNumber, "accountNumber");
-        if (accountNumberErrors.isEmpty()) {
-            accountNumberErrors.addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
-            accountNumberErrors.addAll(InputValidation.validateAccountNumberExists(accountRepository.findByAccountNumber(accountNumber) != null, "accountNumber"));
-        }
+        List<String> accountNumberErrors = AccountValidation.validateNewAccountNumber(accountNumber, accountRepository, "accountNumber");
         errors.put("accountNumber", accountNumberErrors);
 
         // Check for any errors before proceeding
@@ -47,11 +44,7 @@ public class LedgerService {
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
         // Validate account number
-        List<String> accountNumberErrors = InputValidation.validateNotBlank(accountNumber, "accountNumber");
-        if (accountNumberErrors.isEmpty()) {
-            Account account = accountRepository.findByAccountNumber(accountNumber);
-            accountNumberErrors.addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
-        }
+        List<String> accountNumberErrors = AccountValidation.validateExistingAccountNumber(accountNumber, accountRepository, "accountNumber");
         errors.put("accountNumber", accountNumberErrors);
 
         // Check for any errors before proceeding
@@ -68,12 +61,7 @@ public class LedgerService {
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
         // Validate account number
-        List<String> accountNumberErrors = InputValidation.validateNotBlank(accountNumber, "accountNumber");
-        if (accountNumberErrors.isEmpty()) {
-            accountNumberErrors.addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
-            Account account = accountRepository.findByAccountNumber(accountNumber);
-            accountNumberErrors.addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
-        }
+        List<String> accountNumberErrors = AccountValidation.validateExistingAccountNumber(accountNumber, accountRepository, "accountNumber");
         errors.put("accountNumber", accountNumberErrors);
 
         // Validate amount
@@ -99,12 +87,7 @@ public class LedgerService {
         Map<String, List<String>> errors = new LinkedHashMap<>();
 
         // Validate account number
-        List<String> accountNumberErrors = InputValidation.validateNotBlank(accountNumber, "accountNumber");
-        if (accountNumberErrors.isEmpty()) {
-            accountNumberErrors.addAll(InputValidation.validateAccountNumber(accountNumber, "accountNumber"));
-            Account account = accountRepository.findByAccountNumber(accountNumber);
-            accountNumberErrors.addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
-        }
+        List<String> accountNumberErrors = AccountValidation.validateExistingAccountNumber(accountNumber, accountRepository, "accountNumber");
         errors.put("accountNumber", accountNumberErrors);
 
         // Validate amount

@@ -7,6 +7,14 @@ import java.util.List;
 
 public class InputValidation {
 
+    public static List<String> validateNotNull(String value, String fieldName) {
+        List<String> errors = new ArrayList<>();
+        if (value == null) {
+            errors.add(fieldName + Messages.PARAMETER_NULL);
+        }
+        return errors;
+    }
+
     public static List<String> validateNotBlank(String value, String fieldName) {
         List<String> errors = new ArrayList<>();
         if (value == null || value.trim().isEmpty()) {
