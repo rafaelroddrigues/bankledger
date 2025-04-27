@@ -20,11 +20,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RuntimeException.class)
     public ResponseEntity<Map<String, Object>> handleRuntimeException(RuntimeException ex, WebRequest request) {
-        Map<String, Object> errorDetails = new LinkedHashMap<>();
-        errorDetails.put("status", HttpStatus.INTERNAL_SERVER_ERROR.value());
-        errorDetails.put("error", "Internal Server Error");
-        errorDetails.put("message", ex.getMessage());
-        return new ResponseEntity<>(errorDetails, HttpStatus.INTERNAL_SERVER_ERROR);
+        Map<String, List<String>> errors = new LinkedHashMap<>();
+        errors.put("error", List.of(ex.getMessage()));
+        return buildErrorResponse(errors, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
     private ResponseEntity<Map<String, Object>> buildErrorResponse(Map<String, List<String>> errors, HttpStatus status) {
