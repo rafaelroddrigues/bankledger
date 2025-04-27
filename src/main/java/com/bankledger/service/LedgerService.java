@@ -43,6 +43,25 @@ public class LedgerService {
         accountRepository.save(new Account(accountNumber));
     }
 
+    public Account getAccount(String accountNumber) throws ExceptionList {
+        Map<String, List<String>> errors = new LinkedHashMap<>();
+
+        // Validate account number
+        List<String> accountNumberErrors = InputValidation.validateNotBlank(accountNumber, "accountNumber");
+        if (accountNumberErrors.isEmpty()) {
+            Account account = accountRepository.findByAccountNumber(accountNumber);
+            accountNumberErrors.addAll(InputValidation.validateAccountNotFound(account != null, "accountNumber"));
+        }
+        errors.put("accountNumber", accountNumberErrors);
+
+        // Check for any errors before proceeding
+        if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
+            throw new ExceptionList(errors);
+        }
+
+        return accountRepository.findByAccountNumber(accountNumber);
+    }
+
     public void deposit(DepositRequest request) throws ExceptionList {
         String accountNumber = request.accountNumber();
         String amount = request.amount();
