@@ -6,7 +6,6 @@ plugins {
 
 group = 'com.bankledger'
 version = '0.0.1-SNAPSHOT'
-sourceCompatibility = '17'
 
 repositories {
     mavenCentral()
@@ -25,6 +24,13 @@ dependencies {
 }
 
 test {
+    doFirst {
+        def byteBuddyAgent = configurations.testRuntimeClasspath.find { it.name.contains('byte-buddy-agent') }
+        if (byteBuddyAgent) {
+            jvmArgs += "-javaagent:${byteBuddyAgent}"
+        }
+        jvmArgs += "-Xshare:off"
+    }
     useJUnitPlatform()
 }
 
