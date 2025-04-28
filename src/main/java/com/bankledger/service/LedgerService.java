@@ -7,7 +7,8 @@ import com.bankledger.exception.ExceptionList;
 import com.bankledger.model.Account;
 import com.bankledger.repository.AccountRepository;
 import com.bankledger.validation.AccountValidation;
-import com.bankledger.validation.InputValidation;
+import com.bankledger.validation.AmountValidation;
+import com.bankledger.validation.BalanceValidation;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
@@ -36,7 +37,7 @@ public class LedgerService {
             throw new ExceptionList(errors);
         }
 
-        // Business logic to create account
+        // Create account
         accountRepository.save(new Account(accountNumber));
     }
 
@@ -52,6 +53,7 @@ public class LedgerService {
             throw new ExceptionList(errors);
         }
 
+        // Get account
         return accountRepository.findByAccountNumber(accountNumber);
     }
 
@@ -65,10 +67,7 @@ public class LedgerService {
         errors.put("accountNumber", accountNumberErrors);
 
         // Validate amount
-        List<String> amountErrors = InputValidation.validateNotBlank(amount, "amount");
-        if (amountErrors.isEmpty()) {
-            amountErrors.addAll(InputValidation.validateAmount(amount, "amount"));
-        }
+        List<String> amountErrors = AmountValidation.validateAmount(amount, "amount");
         errors.put("amount", amountErrors);
 
         // Check for any errors before proceeding
@@ -76,7 +75,7 @@ public class LedgerService {
             throw new ExceptionList(errors);
         }
 
-        // Business logic to deposit amount
+        // Deposit amount
         Account account = accountRepository.findByAccountNumber(accountNumber);
         accountRepository.save(account.deposit(Double.parseDouble(amount)));
     }
@@ -91,26 +90,20 @@ public class LedgerService {
         errors.put("accountNumber", accountNumberErrors);
 
         // Validate amount
-        List<String> amountErrors = InputValidation.validateNotBlank(amount, "amount");
-        if (amountErrors.isEmpty()) {
-            amountErrors.addAll(InputValidation.validateAmount(amount, "amount"));
-        }
+        List<String> amountErrors = AmountValidation.validateAmount(amount, "amount");
         errors.put("amount", amountErrors);
+
+        // Validate sufficient balance
+        List<String> balanceErrors = BalanceValidation.validateSufficientBalance(accountNumber, accountRepository, amount, "amount");
+        errors.put("amount", balanceErrors);
 
         // Check for any errors before proceeding
         if (errors.values().stream().anyMatch(list -> !list.isEmpty())) {
             throw new ExceptionList(errors);
         }
 
-        // Validate sufficient balance
+        // Withdraw amount
         Account account = accountRepository.findByAccountNumber(accountNumber);
-        if (account != null) {
-            List<String> balanceErrors = InputValidation.validateSufficientBalance(account.balance() >= Double.parseDouble(amount), "amount");
-            if (!balanceErrors.isEmpty()) {
-                errors.put("amount", balanceErrors);
-                throw new ExceptionList(errors);
-            }
-            accountRepository.save(account.withdraw(Double.parseDouble(amount)));
-        }
+        accountRepository.save(account.withdraw(Double.parseDouble(amount)));
     }
 }
