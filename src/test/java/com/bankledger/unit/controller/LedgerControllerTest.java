@@ -44,6 +44,104 @@ class LedgerControllerTest {
     }
 
     @Test
+    void testCreateAccount_Success_AccountNumberWithLeadingZeros() {
+        // Arrange
+        CreateAccountRequest request = new CreateAccountRequest("000123456");
+        doNothing().when(ledgerService).createAccount(request);
+
+        // Act
+        ResponseEntity<?> response = ledgerController.createAccount(request);
+
+        // Assert
+        assertEquals(201, response.getStatusCode().value());
+        verify(ledgerService, times(1)).createAccount(request);
+    }
+
+    @Test
+    void testCreateAccount_Failure_BlankAccountNumber() {
+        // Arrange
+        CreateAccountRequest request = new CreateAccountRequest("");
+        doThrow(new RuntimeException("Account number cannot be blank")).when(ledgerService).createAccount(request);
+
+        // Act
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> ledgerController.createAccount(request));
+
+        // Assert
+        assertEquals("Account number cannot be blank", exception.getMessage());
+        verify(ledgerService, times(1)).createAccount(request);
+    }
+
+    @Test
+    void testCreateAccount_Failure_AccountNumberOnlyWhitespace() {
+        // Arrange
+        CreateAccountRequest request = new CreateAccountRequest("   ");
+        doThrow(new RuntimeException("Account number cannot be blank")).when(ledgerService).createAccount(request);
+
+        // Act
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> ledgerController.createAccount(request));
+
+        // Assert
+        assertEquals("Account number cannot be blank", exception.getMessage());
+        verify(ledgerService, times(1)).createAccount(request);
+    }
+
+    @Test
+    void testCreateAccount_Failure_NullAccountNumber() {
+        // Arrange
+        CreateAccountRequest request = new CreateAccountRequest(null);
+        doThrow(new RuntimeException("Account number must not be null")).when(ledgerService).createAccount(request);
+
+        // Act
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> ledgerController.createAccount(request));
+
+        // Assert
+        assertEquals("Account number must not be null", exception.getMessage());
+        verify(ledgerService, times(1)).createAccount(request);
+    }
+
+    @Test
+    void testCreateAccount_Failure_AccountNumberTooShort() {
+        // Arrange
+        CreateAccountRequest request = new CreateAccountRequest("12345");
+        doThrow(new RuntimeException("Invalid account number")).when(ledgerService).createAccount(request);
+
+        // Act
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> ledgerController.createAccount(request));
+
+        // Assert
+        assertEquals("Invalid account number", exception.getMessage());
+        verify(ledgerService, times(1)).createAccount(request);
+    }
+
+    @Test
+    void testCreateAccount_Failure_AccountNumberTooLong() {
+        // Arrange
+        CreateAccountRequest request = new CreateAccountRequest("12345678901");
+        doThrow(new RuntimeException("Invalid account number")).when(ledgerService).createAccount(request);
+
+        // Act
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> ledgerController.createAccount(request));
+
+        // Assert
+        assertEquals("Invalid account number", exception.getMessage());
+        verify(ledgerService, times(1)).createAccount(request);
+    }
+
+    @Test
+    void testCreateAccount_Failure_InvalidCharacter() {
+        // Arrange
+        CreateAccountRequest request = new CreateAccountRequest("1@3a56789");
+        doThrow(new RuntimeException("Invalid account number")).when(ledgerService).createAccount(request);
+
+        // Act
+        RuntimeException exception = assertThrows(RuntimeException.class, () -> ledgerController.createAccount(request));
+
+        // Assert
+        assertEquals("Invalid account number", exception.getMessage());
+        verify(ledgerService, times(1)).createAccount(request);
+    }
+
+    @Test
     void testCreateAccount_Failure_AccountAlreadyExists() {
         // Arrange
         CreateAccountRequest request = new CreateAccountRequest("123456789");
